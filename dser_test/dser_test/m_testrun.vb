@@ -4,7 +4,7 @@ Module testrun
     Public Const NullDate As Date = #7/7/0007#
 
     Sub Main()
-        Dim d As New Dataseries.DateTimeSeries(Of Integer)(New Date(2017, 7, 14, 0, 0, 0), New Date(2017, 7, 14, 0, 30, 0), 0)
+        Dim d As New Dataseries.DateSeriesOfInteger(New Date(2017, 7, 14, 0, 0, 0), New Date(2017, 7, 14, 0, 30, 0), 0)
 
         Dim gufi As gufo() = {New gufo(1, New Date(2017, 7, 14, 0, 4, 0), NullDate),
                               New gufo(2, New Date(2017, 7, 14, 0, 10, 0), New Date(2017, 7, 14, 0, 20, 0))}

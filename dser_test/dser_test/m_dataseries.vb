@@ -1,16 +1,15 @@
 ﻿Namespace Dataseries
 
-    Public Class DateTimeSeries(Of T)
+    Public MustInherit Class DateSeries(Of T)
 #Region "DECLARATIONS"
         Private _p As SortedDictionary(Of Date, T)
         Private _t0 As Date
         Private _tN As Date
 
-        Private _averageableTypes As Type() = {GetType(Integer), GetType(Double)}
 #End Region
 
 #Region "CONSTRUCTORS"
-        Public Sub New(fdat As Date, ldat As Date, Optional default_value As T = Nothing)
+        Protected Sub New(fdat As Date, ldat As Date, Optional default_value As T = Nothing)
             If fdat = Nothing OrElse ldat = Nothing Then
                 Throw New ArgumentNullException("Timeseries boundaries cannot be null dates")
             ElseIf fdat > ldat Then
@@ -141,53 +140,45 @@
         End Property
 
 
-        Public ReadOnly Property GetPredominantValue(from_date As Date, to_date As Date) As T
-            Get
-                'PM TEMPORARY RUNTIME PROTECTION
-                If Not _averageableTypes.Contains(GetType(T)) Then
-                    Throw New InvalidOperationException(String.Format("GetAverageValue is not defined for objects of Type {0}", GetType(T)))
+        Public Function GetPredominantValue(from_date As Date, to_date As Date) As T
+            If from_date = Nothing OrElse to_date = Nothing Then
+                Throw New ArgumentNullException("Interval boundaries cannot be null dates.")
+            ElseIf from_date > to_date Then
+                Throw New ArgumentException("Interval start date cannot be later than interval end date.")
+            End If
+
+            If from_date < _t0 OrElse to_date > _tN Then
+                Throw New System.ArgumentOutOfRangeException("The selected interval falls beyond the domain of the timeseries.")
+            Else
+
+                Dim from_interval As Integer = IndexOfIntervalContainingInstant(from_date)
+                Dim to_interval As Integer = IndexOfIntervalContainingInstant(to_date)
+
+                '1: the simple case
+                If from_interval = to_interval Then
+                    Return _p(from_date)
                 End If
 
-                If from_date = Nothing OrElse to_date = Nothing Then
-                    Throw New ArgumentNullException("Interval boundaries cannot be null dates.")
-                ElseIf from_date > to_date Then
-                    Throw New ArgumentException("Interval start date cannot be later than interval end date.")
-                End If
-
-                If from_date < _t0 OrElse to_date > _tN Then
-                    Throw New System.ArgumentOutOfRangeException("The selected interval falls beyond the domain of the timeseries.")
-                Else
-
-                    Dim from_interval As Integer = IndexOfIntervalContainingInstant(from_date)
-                    Dim to_interval As Integer = IndexOfIntervalContainingInstant(to_date)
-
-                    '1: the simple case
-                    If from_interval = to_interval Then
-                        Return _p(from_date)
+                '2: otherwise return the time weighted average
+                'first accumulate all intervals except for the last one
+                Dim ret As T
+                Dim time As Integer
+                ret = _p(from_date)
+                time = TimeToNextInterval(from_date)
+                For i As Integer = from_interval + 1 To to_interval - 1
+                    If DurationOfInterval(i) > time Then
+                        time = DurationOfInterval(i)
+                        ret = _p.Values(i)
                     End If
-
-                    '2: otherwise return the time weighted average
-                    'first accumulate all intervals except for the last one
-                    Dim ret As T
-                    Dim time As Integer
-                    ret = _p(from_date)
-                    time = TimeToNextInterval(from_date)
-                    For i As Integer = from_interval + 1 To to_interval - 1
-                        If DurationOfInterval(i) > time Then
-                            time = DurationOfInterval(i)
-                            ret = _p.Values(i)
-                        End If
-                    Next
-                    If TimeSincePreviousInterval(to_date) > time Then
-                        ret = _p(to_date)
-                    End If
-                    Return ret
+                Next
+                If TimeSincePreviousInterval(to_date) > time Then
+                    ret = _p(to_date)
                 End If
+                Return ret
+            End If
 
-                Return Nothing
-
-            End Get
-        End Property
+            Return Nothing
+        End Function
 
 #End Region
 
@@ -214,6 +205,17 @@
         End Function
 #End Region
 
-    End Class
 
+    End Class
+    Public Class DateSeriesOfInteger
+        Inherits DateSeries(Of Integer)
+        Public Sub New(fdat As Date, ldat As Date, Optional default_value As Integer = Nothing)
+            MyBase.New(fdat, ldat, default_value)
+        End Sub
+
+        Public Function GetAverageValue(from_date As Date, to_date As Date) As Integer
+            Return 0
+        End Function
+
+    End Class
 End Namespace

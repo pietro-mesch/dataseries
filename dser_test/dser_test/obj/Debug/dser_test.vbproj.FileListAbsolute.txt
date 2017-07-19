@@ -1,0 +1,10 @@
+E:\SOFT\dataseries\dser_test\dser_test\bin\Debug\dser_test.exe.config
+E:\SOFT\dataseries\dser_test\dser_test\bin\Debug\dser_test.exe
+E:\SOFT\dataseries\dser_test\dser_test\bin\Debug\dser_test.pdb
+E:\SOFT\dataseries\dser_test\dser_test\bin\Debug\dser_test.xml
+E:\SOFT\dataseries\dser_test\dser_test\obj\Debug\dser_test.vbprojResolveAssemblyReference.cache
+E:\SOFT\dataseries\dser_test\dser_test\obj\Debug\dser_test.Resources.resources
+E:\SOFT\dataseries\dser_test\dser_test\obj\Debug\dser_test.vbproj.GenerateResource.Cache
+E:\SOFT\dataseries\dser_test\dser_test\obj\Debug\dser_test.exe
+E:\SOFT\dataseries\dser_test\dser_test\obj\Debug\dser_test.xml
+E:\SOFT\dataseries\dser_test\dser_test\obj\Debug\dser_test.pdb
