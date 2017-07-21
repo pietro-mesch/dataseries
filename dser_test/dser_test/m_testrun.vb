@@ -6,7 +6,7 @@ Module testrun
     Sub Main()
         Dim d As New Dataseries.DateSeriesOfInteger(New Date(2017, 7, 14, 0, 0, 0), New Date(2017, 7, 14, 0, 30, 0), 0)
 
-        Dim gufi As gufo() = {New gufo(1, New Date(2017, 7, 14, 0, 4, 0), NullDate),
+        Dim gufi As gufo() = {New gufo(1, New Date(2017, 7, 14, 0, 4, 0), New Date(2017, 7, 14, 0, 26, 0)),
                               New gufo(2, New Date(2017, 7, 14, 0, 10, 0), New Date(2017, 7, 14, 0, 20, 0))}
 
         d.ReadIntervals(gufi.Select(Function(gufo) gufo.value).ToArray,
@@ -21,7 +21,12 @@ Module testrun
         test = d.GetValue(#7/14/2017 12:17:00 AM#)
         test = d.GetValue(#7/14/2017 12:18:00 AM#)
         test = d.GetValue(#7/14/2017 12:30:00 AM#)
-
+        test = d.GetIntervalModeValue(#7/14/2017 12:00:00 AM#, #7/14/2017 12:00:00 AM#)
+        test = d.GetIntervalModeValue(#7/14/2017 12:01:00 AM#, #7/14/2017 12:27:00 AM#)
+        test = d.GetIntervalAverageValue(#7/14/2017 12:00:00 AM#, #7/14/2017 12:00:00 AM#)
+        test = d.GetIntervalAverageValue(#7/14/2017 12:04:00 AM#, #7/14/2017 12:10:00 AM#)
+        test = d.GetIntervalAverageValue(#7/14/2017 12:00:00 AM#, #7/14/2017 12:30:00 AM#)
+        test = d.GetIntervalAverageValue(#7/14/2017 12:01:00 AM#, #7/14/2017 12:12:00 AM#)
     End Sub
 
     Public Class gufo

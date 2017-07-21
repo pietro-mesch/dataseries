@@ -98,5 +98,21 @@ dser_test
  <returns></returns>
  <remarks></remarks>
 </member>
+<member name="M:dser_test.Dataseries.DateSeries`1.GetIntervalModeValue(System.DateTime,System.DateTime)">
+ <summary>
+ Returns the Mode Value of the interval between from_date and to_date.
+ </summary>
+ <param name="from_date"></param>
+ <param name="to_date"></param>
+ <returns>The longest occurring value during the selected interval.</returns>
+</member>
+<member name="M:dser_test.Dataseries.DateSeriesOfInteger.GetIntervalAverageValue(System.DateTime,System.DateTime)">
+ <summary>
+ Returns the Average Value during the selected interval.
+ </summary>
+ <param name="from_date"></param>
+ <param name="to_date"></param>
+ <returns></returns>
+</member>
 </members>
 </doc>

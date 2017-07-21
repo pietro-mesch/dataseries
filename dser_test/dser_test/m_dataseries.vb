@@ -2,9 +2,9 @@
 
     Public MustInherit Class DateSeries(Of T)
 #Region "DECLARATIONS"
-        Private _p As SortedDictionary(Of Date, T)
-        Private _t0 As Date
-        Private _tN As Date
+        Protected _p As SortedDictionary(Of Date, T)
+        Protected _t0 As Date
+        Protected _tN As Date
 
 #End Region
 
@@ -139,8 +139,15 @@
             End Get
         End Property
 
+        ''' <summary>
+        ''' Returns the Mode Value of the interval between from_date and to_date.
+        ''' </summary>
+        ''' <param name="from_date"></param>
+        ''' <param name="to_date"></param>
+        ''' <returns>The longest occurring value during the selected interval.</returns>
+        Public Function GetIntervalModeValue(from_date As Date, to_date As Date) As T
+            Dim i As Integer
 
-        Public Function GetPredominantValue(from_date As Date, to_date As Date) As T
             If from_date = Nothing OrElse to_date = Nothing Then
                 Throw New ArgumentNullException("Interval boundaries cannot be null dates.")
             ElseIf from_date > to_date Then
@@ -156,25 +163,33 @@
 
                 '1: the simple case
                 If from_interval = to_interval Then
-                    Return _p(from_date)
+                    Return _p.Values(from_interval)
                 End If
 
-                '2: otherwise return the time weighted average
-                'first accumulate all intervals except for the last one
-                Dim ret As T
-                Dim time As Integer
-                ret = _p(from_date)
-                time = TimeToNextInterval(from_date)
-                For i As Integer = from_interval + 1 To to_interval - 1
-                    If DurationOfInterval(i) > time Then
-                        time = DurationOfInterval(i)
-                        ret = _p.Values(i)
+                '2: otherwise return the value that occurs for the majority of time during the selected interval
+
+                'accumulate time for each value taken by the series over the interval
+                'a dictionary is used so that equal values are accumulated together
+                Dim values_durations As New Dictionary(Of T, Integer)
+                values_durations.Add(_p.Values(from_interval), TimeToNextInterval(from_date))
+                For i = from_interval + 1 To to_interval - 1
+                    values_durations.Item(_p.Values(i)) = DurationOfInterval(i) + If(values_durations.Keys.Contains(_p.Values(i)), values_durations(_p.Values(i)), 0)
+                Next
+                values_durations.Item(_p.Values(to_interval)) = TimeSincePreviousInterval(to_date) + If(values_durations.Keys.Contains(_p.Values(to_interval)), values_durations(_p.Values(to_interval)), 0)
+
+                'find the index in the dictionary of the longest running value
+                Dim ret As Integer
+                Dim longest_time As Integer = -1
+                For i = 0 To values_durations.Count - 1
+                    If values_durations.Values(i) > longest_time Then
+                        longest_time = values_durations.Values(i)
+                        ret = i
                     End If
                 Next
-                If TimeSincePreviousInterval(to_date) > time Then
-                    ret = _p(to_date)
-                End If
-                Return ret
+
+                'return the corresponding object/value
+                Return values_durations.Keys(ret)
+
             End If
 
             Return Nothing
@@ -183,7 +198,7 @@
 #End Region
 
 #Region "PRIVATE METHODS"
-        Private Function IndexOfIntervalContainingInstant(instant As Date) As Integer
+        Protected Function IndexOfIntervalContainingInstant(instant As Date) As Integer
             Dim i As Integer = 0
             While i < _p.Count AndAlso _p.Keys(i) <= instant
                 i += 1
@@ -192,15 +207,15 @@
             Return i - 1
         End Function
 
-        Private Function DurationOfInterval(index As Integer) As Integer
-            Return (_p.Keys(index + 1) - _p.Keys(index)).TotalMilliseconds
+        Protected Function DurationOfInterval(index As Integer) As Integer
+            Return (_p.Keys(index + 1) - _p.Keys(index)).TotalSeconds
         End Function
 
-        Private Function TimeToNextInterval(dt As Date) As Integer
+        Protected Function TimeToNextInterval(dt As Date) As Integer
             Return (_p.Keys(IndexOfIntervalContainingInstant(dt) + 1) - dt).TotalSeconds
         End Function
 
-        Private Function TimeSincePreviousInterval(dt As Date) As Integer
+        Protected Function TimeSincePreviousInterval(dt As Date) As Integer
             Return (dt - _p.Keys(IndexOfIntervalContainingInstant(dt))).TotalSeconds
         End Function
 #End Region
@@ -213,8 +228,47 @@
             MyBase.New(fdat, ldat, default_value)
         End Sub
 
-        Public Function GetAverageValue(from_date As Date, to_date As Date) As Integer
-            Return 0
+        ''' <summary>
+        ''' Returns the Average Value during the selected interval.
+        ''' </summary>
+        ''' <param name="from_date"></param>
+        ''' <param name="to_date"></param>
+        ''' <returns></returns>
+        Public Function GetIntervalAverageValue(from_date As Date, to_date As Date) As Integer
+            If from_date = Nothing OrElse to_date = Nothing Then
+                Throw New ArgumentNullException("Interval boundaries cannot be null dates.")
+            ElseIf from_date > to_date Then
+                Throw New ArgumentException("Interval start date cannot be later than interval end date.")
+            End If
+
+            If from_date < _t0 OrElse to_date > _tN Then
+                Throw New System.ArgumentOutOfRangeException("The selected interval falls beyond the domain of the timeseries.")
+            Else
+
+                Dim from_interval As Integer = IndexOfIntervalContainingInstant(from_date)
+                Dim to_interval As Integer = IndexOfIntervalContainingInstant(to_date)
+
+                '1: the simple case
+                If from_interval = to_interval Then
+                    Return _p.Values(from_interval)
+                End If
+
+                '2: otherwise return the time weighted average
+                Dim ret As Integer
+                Dim time As Integer
+                time = TimeToNextInterval(from_date)
+                ret = _p.Values(from_interval) * TimeToNextInterval(from_date)
+                For i As Integer = from_interval + 1 To to_interval - 1
+                    time += DurationOfInterval(i)
+                    ret += _p.Values(i) * DurationOfInterval(i)
+                Next
+                time += TimeSincePreviousInterval(to_date)
+                ret += _p.Values(to_interval) * TimeSincePreviousInterval(to_date)
+
+                Return Math.Round(ret / time)
+            End If
+
+            Return Nothing
         End Function
 
     End Class
