@@ -1,4 +1,8 @@
-﻿Namespace Dataseries
+﻿Imports System
+Imports System.Collections.Generic
+Imports System.Linq
+
+Namespace Dataseries
 
     Public MustInherit Class DateSeries(Of T)
 #Region "DECLARATIONS"
@@ -170,7 +174,7 @@
 
                 'accumulate time for each value taken by the series over the interval
                 'a dictionary is used so that equal values are accumulated together
-                Dim values_durations As New Dictionary(Of T, Integer)
+                Dim values_durations As New Dictionary(Of T, Double)
                 values_durations.Add(_p.Values(from_interval), TimeToNextInterval(from_date))
                 For i = from_interval + 1 To to_interval - 1
                     values_durations.Item(_p.Values(i)) = DurationOfInterval(i) + If(values_durations.Keys.Contains(_p.Values(i)), values_durations(_p.Values(i)), 0)
@@ -179,7 +183,7 @@
 
                 'find the index in the dictionary of the longest running value
                 Dim ret As Integer
-                Dim longest_time As Integer = -1
+                Dim longest_time As Double = -1
                 For i = 0 To values_durations.Count - 1
                     If values_durations.Values(i) > longest_time Then
                         longest_time = values_durations.Values(i)
@@ -207,21 +211,21 @@
             Return i - 1
         End Function
 
-        Protected Function DurationOfInterval(index As Integer) As Integer
+        Protected Function DurationOfInterval(index As Integer) As Double
             Return (_p.Keys(index + 1) - _p.Keys(index)).TotalSeconds
         End Function
 
-        Protected Function TimeToNextInterval(dt As Date) As Integer
+        Protected Function TimeToNextInterval(dt As Date) As Double
             Return (_p.Keys(IndexOfIntervalContainingInstant(dt) + 1) - dt).TotalSeconds
         End Function
 
-        Protected Function TimeSincePreviousInterval(dt As Date) As Integer
+        Protected Function TimeSincePreviousInterval(dt As Date) As Double
             Return (dt - _p.Keys(IndexOfIntervalContainingInstant(dt))).TotalSeconds
         End Function
 #End Region
 
-
     End Class
+
     Public Class DateSeriesOfInteger
         Inherits DateSeries(Of Integer)
         Public Sub New(fdat As Date, ldat As Date, Optional default_value As Integer = Nothing)
@@ -254,8 +258,8 @@
                 End If
 
                 '2: otherwise return the time weighted average
-                Dim ret As Integer
-                Dim time As Integer
+                Dim ret As Double
+                Dim time As Double
                 time = TimeToNextInterval(from_date)
                 ret = _p.Values(from_interval) * TimeToNextInterval(from_date)
                 For i As Integer = from_interval + 1 To to_interval - 1
@@ -265,7 +269,7 @@
                 time += TimeSincePreviousInterval(to_date)
                 ret += _p.Values(to_interval) * TimeSincePreviousInterval(to_date)
 
-                Return Math.Round(ret / time)
+                Return CInt(Math.Round(ret / time))
             End If
 
             Return Nothing
